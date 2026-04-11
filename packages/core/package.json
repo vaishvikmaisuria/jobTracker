@@ -1,0 +1,12 @@
+{
+  "name": "@job-tracker/core",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "private": true,
+  "dependencies": {
+    "@job-tracker/types": "*",
+    "@job-tracker/storage": "*",
+    "zod": "^3.22.4"
+  }
+}
