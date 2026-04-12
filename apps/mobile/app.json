@@ -1,0 +1,17 @@
+{
+	"expo": {
+		"name": "Job Tracker",
+		"slug": "job-tracker-mobile",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"platforms": ["ios", "android"],
+		"assetBundlePatterns": ["**/*"],
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.jobtracker.mobile"
+		},
+		"android": {
+			"package": "com.jobtracker.mobile"
+		}
+	}
+}

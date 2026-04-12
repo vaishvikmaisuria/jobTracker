@@ -1,0 +1,14 @@
+{
+	"extends": "expo/tsconfig.base",
+	"compilerOptions": {
+		"strict": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"],
+			"@job-tracker/types": ["../../packages/types/src/index.ts"],
+			"@job-tracker/storage": ["../../packages/storage/src/index.ts"],
+			"@job-tracker/core": ["../../packages/core/src/index.ts"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx"]
+}
