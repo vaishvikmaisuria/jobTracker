@@ -1,67 +1,140 @@
 # jobTracker
 
-Create a personal productivity app inspired by a Notion-style tracker/dashboard for job searching and interview prep.
+A monorepo productivity tracker for job searching and interview prep, with shared domain logic across web and mobile.
 
-Personal productivity tracker for job searching and interview prep, built as a monorepo with a swap-ready persistence layer.
+The project includes:
 
-## Architecture
+- Web app (Next.js) for full dashboard and management workflows
+- Mobile app (Expo React Native) for on-the-go tracking
+- Shared packages for types, validation, seed data, helpers, and storage repositories
+- Adapter-based persistence that keeps UI code decoupled from storage implementation
+
+## Monorepo Structure
 
 ```
-packages/
-  types/    – shared enums + entity interfaces (Job, Problem, Resource)
-  storage/  – IJobRepository / IProblemRepository / IResourceRepository
-              + LocalStorage implementations (drop-in replaceable with Mongo)
-  core/     – Zod schemas, seed data, color maps, formatters
 apps/
-  web/      – Next.js 15 + React 18 + Tailwind CSS
-  mobile/   – Expo React Native (Android + iOS)
+  web/       Next.js app (dashboard + management UI)
+  mobile/    Expo React Native app
+packages/
+  types/     Shared enums, entities, filter/sort types
+  core/      Zod schemas, seed data, stats + formatting helpers
+  storage/   Repository interfaces + sync/async local implementations
 ```
 
-Persistence is fully abstracted — `LocalJobRepository` implements `IJobRepository`; swapping to `MongoJobRepository` requires no UI changes.
+## Architecture Highlights
 
-For mobile, async repositories use injected storage adapters (`IAsyncStorageAdapter`) and run on top of Expo AsyncStorage without coupling domain logic to React Native APIs.
+- Repository pattern for all domain collections:
+    - Jobs
+    - Problems
+    - Resources
+- Storage is abstracted through interfaces and adapters:
+    - Sync adapter for browser localStorage workflows
+    - Async adapter for React Native AsyncStorage workflows
+- Shared validation and business logic live in packages/core and packages/types
+- Zustand stores orchestrate app state and call repository methods directly
+- Seed data is loaded once per collection via seeded-flag guards
 
-## Run Apps
+## Tech Stack
 
-From repo root:
+- Monorepo: npm workspaces
+- Web: Next.js 15, React, Tailwind CSS, Zustand, React Hook Form, Zod
+- Mobile: Expo SDK 51, React Native 0.74, Zustand
+- Shared packages: TypeScript, Zod, reusable helper modules
 
-- `npm install`
-- `npm run web` to start Next.js on web
-- `npm run mobile` to start Expo dev server
-- `npm run mobile:ios` to run iOS simulator build
-- `npm run mobile:android` to run Android emulator build
+## Current Feature Set
 
-Type checks:
+### Dashboard (Web)
 
-- `npm run type-check`
-- `npm run type-check:mobile`
+- Summary cards for applications, active interviews, offers, and solved problems
+- Sections for recent applications, active interviews, favorite problems, and saved resources
+- Guided walkthrough modal (Feature Guide)
 
-## Features
+### Job Tracker (Web)
 
-**Job Application Tracker**
+- Full CRUD for job applications
+- 12 status options (Applied through Requires Follow-Up)
+- Search, status filtering, and sorting
+- Detail panel with notes, links, follow-up context, and contact metadata
 
-- Table view with 12 status pills (Applied → Offer Received → Rejected etc.)
-- Click-to-expand side detail panel with all fields, links, notes
-- CRUD via modal forms, search + status filter + date/company sort, follow-up flag
+### LeetCode Tracker (Web + Mobile)
 
-**LeetCode Tracker**
+- Track difficulty, type, status, tags, revisions, and favorites
+- Completion metrics and solved-rate visibility
+- Quick actions (mark solved, favorite toggle)
 
-- Easy / Medium / Hard difficulty badges, completion stats (solved %, favorites)
-- Mark-solved quick action, per-problem revision count and notes
+### Resources Tracker (Web + Mobile)
 
-**Useful Links**
+- Save and categorize learning/job-prep resources
+- Filter by category/type and search
+- Open links directly from list views
 
-- Card grid grouped by category, type-colored badges, direct external link open
-- CRUD + search + category/type filters
+### Data Portability Vault (Web)
 
-**Dashboard**
+- Export all jobs, problems, and resources to JSON backup
+- Import backup files with duplicate-id detection
+- Skips duplicates automatically and reports import summary
 
-- Quick stats: total applications, active interviews, offers, solved problems
-- Recent applications, active interviews, favorite problems, saved resources
+### Mobile Experience
 
-## State Management
+- Tabbed app sections: Dashboard, Jobs, Problems, Resources
+- Shared package logic reused from web domain layer
+- Async repository implementations backed by AsyncStorage
 
-Zustand stores call repository methods directly; seed data is written to localStorage on first launch via a seeded-key guard.
+## Getting Started
+
+### 1) Install dependencies
+
+From repository root:
+
+```bash
+npm install
+```
+
+### 2) Run apps
+
+From repository root:
+
+- Start web app:
+
+```bash
+npm run web
+```
+
+- Start Expo dev server:
+
+```bash
+npm run mobile
+```
+
+- Run iOS build:
+
+```bash
+npm run mobile:ios
+```
+
+- Run Android build:
+
+```bash
+npm run mobile:android
+```
+
+## Root Scripts
+
+- npm run web
+- npm run mobile
+- npm run mobile:ios
+- npm run mobile:android
+- npm run build:web
+- npm run type-check
+- npm run type-check:mobile
+
+## Data Model Overview
+
+Shared entities are defined in packages/types:
+
+- Job: application lifecycle, contacts, follow-up flags, salary/link/notes metadata
+- Problem: difficulty, status, revision count, solved timeline, favorites
+- Resource: categorized external links with notes and tags
 
 ## Screenshots
 
@@ -69,7 +142,7 @@ Zustand stores call repository methods directly; seed data is written to localSt
 
 ![Dashboard](https://github.com/user-attachments/assets/09a2be09-24cf-4b2b-a3b1-7e102c62fcd6)
 
-### Job Tracker – table + detail panel
+### Job Tracker
 
 ![Jobs](https://github.com/user-attachments/assets/617a4367-4c56-4401-b0a9-cfb9759ecbc3)
 
