@@ -1,112 +1,123 @@
 import type {
-  Problem,
-  CreateProblemInput,
-  UpdateProblemInput,
-  ProblemFilters,
-  SortConfig,
-  ProblemSortField,
+	Problem,
+	CreateProblemInput,
+	UpdateProblemInput,
+	ProblemFilters,
+	SortConfig,
+	ProblemSortField,
 } from "@job-tracker/types";
 import type { IProblemRepository } from "../interfaces/IProblemRepository";
+import type { ISyncStorageAdapter } from "../interfaces/IStorageAdapter";
+import { STORAGE_KEYS } from "../constants";
 import { generateId, now } from "../utils";
+import {
+	browserStorageAdapter,
+	readCollectionSync,
+	writeCollectionSync,
+} from "./storageHelpers";
 
-const STORAGE_KEY = "job_tracker_problems";
-
-function loadProblems(): Problem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Problem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveProblems(problems: Problem[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(problems));
-}
+const STORAGE_KEY = STORAGE_KEYS.problems;
 
 export class LocalProblemRepository implements IProblemRepository {
-  async getAll(): Promise<Problem[]> {
-    return loadProblems();
-  }
+	constructor(
+		private readonly storage: ISyncStorageAdapter = browserStorageAdapter,
+	) {}
 
-  async getById(id: string): Promise<Problem | null> {
-    return loadProblems().find((p) => p.id === id) ?? null;
-  }
+	private loadProblems(): Problem[] {
+		return readCollectionSync<Problem>(this.storage, STORAGE_KEY);
+	}
 
-  async create(input: CreateProblemInput): Promise<Problem> {
-    const problems = loadProblems();
-    const problem: Problem = {
-      ...input,
-      id: generateId(),
-      createdAt: now(),
-      updatedAt: now(),
-    };
-    saveProblems([...problems, problem]);
-    return problem;
-  }
+	private saveProblems(problems: Problem[]): void {
+		writeCollectionSync(this.storage, STORAGE_KEY, problems);
+	}
 
-  async update(id: string, input: UpdateProblemInput): Promise<Problem | null> {
-    const problems = loadProblems();
-    const index = problems.findIndex((p) => p.id === id);
-    if (index === -1) return null;
-    const updated: Problem = { ...problems[index], ...input, updatedAt: now() };
-    problems[index] = updated;
-    saveProblems(problems);
-    return updated;
-  }
+	async getAll(): Promise<Problem[]> {
+		return this.loadProblems();
+	}
 
-  async delete(id: string): Promise<boolean> {
-    const problems = loadProblems();
-    const next = problems.filter((p) => p.id !== id);
-    if (next.length === problems.length) return false;
-    saveProblems(next);
-    return true;
-  }
+	async getById(id: string): Promise<Problem | null> {
+		return this.loadProblems().find((p) => p.id === id) ?? null;
+	}
 
-  async search(
-    filters: ProblemFilters,
-    sort?: SortConfig<ProblemSortField>
-  ): Promise<Problem[]> {
-    let problems = loadProblems();
+	async create(input: CreateProblemInput): Promise<Problem> {
+		const problems = this.loadProblems();
+		const problem: Problem = {
+			...input,
+			id: generateId(),
+			createdAt: now(),
+			updatedAt: now(),
+		};
+		this.saveProblems([...problems, problem]);
+		return problem;
+	}
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      problems = problems.filter((p) =>
-        p.name.toLowerCase().includes(q)
-      );
-    }
+	async update(
+		id: string,
+		input: UpdateProblemInput,
+	): Promise<Problem | null> {
+		const problems = this.loadProblems();
+		const index = problems.findIndex((p) => p.id === id);
+		if (index === -1) return null;
+		const updated: Problem = {
+			...problems[index],
+			...input,
+			updatedAt: now(),
+		};
+		problems[index] = updated;
+		this.saveProblems(problems);
+		return updated;
+	}
 
-    if (filters.difficulty?.length) {
-      problems = problems.filter((p) =>
-        filters.difficulty!.includes(p.difficulty)
-      );
-    }
+	async delete(id: string): Promise<boolean> {
+		const problems = this.loadProblems();
+		const next = problems.filter((p) => p.id !== id);
+		if (next.length === problems.length) return false;
+		this.saveProblems(next);
+		return true;
+	}
 
-    if (filters.status?.length) {
-      problems = problems.filter((p) =>
-        filters.status!.includes(p.status)
-      );
-    }
+	async search(
+		filters: ProblemFilters,
+		sort?: SortConfig<ProblemSortField>,
+	): Promise<Problem[]> {
+		let problems = this.loadProblems();
 
-    if (filters.type?.length) {
-      problems = problems.filter((p) => filters.type!.includes(p.type));
-    }
+		if (filters.search) {
+			const q = filters.search.toLowerCase();
+			problems = problems.filter((p) => p.name.toLowerCase().includes(q));
+		}
 
-    if (filters.isFavorite !== undefined) {
-      problems = problems.filter((p) => p.isFavorite === filters.isFavorite);
-    }
+		if (filters.difficulty?.length) {
+			problems = problems.filter((p) =>
+				filters.difficulty!.includes(p.difficulty),
+			);
+		}
 
-    if (sort) {
-      problems.sort((a, b) => {
-        const aVal = a[sort.field] ?? "";
-        const bVal = b[sort.field] ?? "";
-        const cmp = String(aVal).localeCompare(String(bVal));
-        return sort.direction === "asc" ? cmp : -cmp;
-      });
-    }
+		if (filters.status?.length) {
+			problems = problems.filter((p) =>
+				filters.status!.includes(p.status),
+			);
+		}
 
-    return problems;
-  }
+		if (filters.type?.length) {
+			problems = problems.filter((p) => filters.type!.includes(p.type));
+		}
+
+		if (filters.isFavorite !== undefined) {
+			problems = problems.filter(
+				(p) => p.isFavorite === filters.isFavorite,
+			);
+		}
+
+		if (sort) {
+			problems.sort((a, b) => {
+				const aVal = a[sort.field] ?? "";
+				const bVal = b[sort.field] ?? "";
+				const cmp = String(aVal).localeCompare(String(bVal));
+				return sort.direction === "asc" ? cmp : -cmp;
+			});
+		}
+
+		return problems;
+	}
 }

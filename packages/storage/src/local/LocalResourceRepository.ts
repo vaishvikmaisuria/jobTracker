@@ -1,96 +1,107 @@
 import type {
-  Resource,
-  CreateResourceInput,
-  UpdateResourceInput,
-  ResourceFilters,
+	Resource,
+	CreateResourceInput,
+	UpdateResourceInput,
+	ResourceFilters,
 } from "@job-tracker/types";
 import type { IResourceRepository } from "../interfaces/IResourceRepository";
+import type { ISyncStorageAdapter } from "../interfaces/IStorageAdapter";
+import { STORAGE_KEYS } from "../constants";
 import { generateId, now } from "../utils";
+import {
+	browserStorageAdapter,
+	readCollectionSync,
+	writeCollectionSync,
+} from "./storageHelpers";
 
-const STORAGE_KEY = "job_tracker_resources";
-
-function loadResources(): Resource[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Resource[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveResources(resources: Resource[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(resources));
-}
+const STORAGE_KEY = STORAGE_KEYS.resources;
 
 export class LocalResourceRepository implements IResourceRepository {
-  async getAll(): Promise<Resource[]> {
-    return loadResources();
-  }
+	constructor(
+		private readonly storage: ISyncStorageAdapter = browserStorageAdapter,
+	) {}
 
-  async getById(id: string): Promise<Resource | null> {
-    return loadResources().find((r) => r.id === id) ?? null;
-  }
+	private loadResources(): Resource[] {
+		return readCollectionSync<Resource>(this.storage, STORAGE_KEY);
+	}
 
-  async create(input: CreateResourceInput): Promise<Resource> {
-    const resources = loadResources();
-    const resource: Resource = {
-      ...input,
-      id: generateId(),
-      createdAt: now(),
-      updatedAt: now(),
-    };
-    saveResources([...resources, resource]);
-    return resource;
-  }
+	private saveResources(resources: Resource[]): void {
+		writeCollectionSync(this.storage, STORAGE_KEY, resources);
+	}
 
-  async update(id: string, input: UpdateResourceInput): Promise<Resource | null> {
-    const resources = loadResources();
-    const index = resources.findIndex((r) => r.id === id);
-    if (index === -1) return null;
-    const updated: Resource = { ...resources[index], ...input, updatedAt: now() };
-    resources[index] = updated;
-    saveResources(resources);
-    return updated;
-  }
+	async getAll(): Promise<Resource[]> {
+		return this.loadResources();
+	}
 
-  async delete(id: string): Promise<boolean> {
-    const resources = loadResources();
-    const next = resources.filter((r) => r.id !== id);
-    if (next.length === resources.length) return false;
-    saveResources(next);
-    return true;
-  }
+	async getById(id: string): Promise<Resource | null> {
+		return this.loadResources().find((r) => r.id === id) ?? null;
+	}
 
-  async search(filters: ResourceFilters): Promise<Resource[]> {
-    let resources = loadResources();
+	async create(input: CreateResourceInput): Promise<Resource> {
+		const resources = this.loadResources();
+		const resource: Resource = {
+			...input,
+			id: generateId(),
+			createdAt: now(),
+			updatedAt: now(),
+		};
+		this.saveResources([...resources, resource]);
+		return resource;
+	}
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      resources = resources.filter(
-        (r) =>
-          r.title.toLowerCase().includes(q) ||
-          (r.description ?? "").toLowerCase().includes(q)
-      );
-    }
+	async update(
+		id: string,
+		input: UpdateResourceInput,
+	): Promise<Resource | null> {
+		const resources = this.loadResources();
+		const index = resources.findIndex((r) => r.id === id);
+		if (index === -1) return null;
+		const updated: Resource = {
+			...resources[index],
+			...input,
+			updatedAt: now(),
+		};
+		resources[index] = updated;
+		this.saveResources(resources);
+		return updated;
+	}
 
-    if (filters.category?.length) {
-      resources = resources.filter((r) =>
-        filters.category!.includes(r.category)
-      );
-    }
+	async delete(id: string): Promise<boolean> {
+		const resources = this.loadResources();
+		const next = resources.filter((r) => r.id !== id);
+		if (next.length === resources.length) return false;
+		this.saveResources(next);
+		return true;
+	}
 
-    if (filters.type?.length) {
-      resources = resources.filter((r) => filters.type!.includes(r.type));
-    }
+	async search(filters: ResourceFilters): Promise<Resource[]> {
+		let resources = this.loadResources();
 
-    if (filters.tags?.length) {
-      resources = resources.filter((r) =>
-        filters.tags!.some((t) => r.tags.includes(t))
-      );
-    }
+		if (filters.search) {
+			const q = filters.search.toLowerCase();
+			resources = resources.filter(
+				(r) =>
+					r.title.toLowerCase().includes(q) ||
+					(r.description ?? "").toLowerCase().includes(q),
+			);
+		}
 
-    return resources;
-  }
+		if (filters.category?.length) {
+			resources = resources.filter((r) =>
+				filters.category!.includes(r.category),
+			);
+		}
+
+		if (filters.type?.length) {
+			resources = resources.filter((r) => filters.type!.includes(r.type));
+		}
+
+		if (filters.tags?.length) {
+			resources = resources.filter((r) =>
+				filters.tags!.some((t) => r.tags.includes(t)),
+			);
+		}
+
+		return resources;
+	}
 }
