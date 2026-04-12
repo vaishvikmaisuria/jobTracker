@@ -17,6 +17,7 @@ import { StatCard, Badge } from "@/components/ui";
 import { JobStatusBadge } from "@/components/jobs/JobBadges";
 import { DifficultyBadge } from "@/components/leetcode/ProblemBadges";
 import { DataSync } from "@/components/layout/DataSync";
+import { FeatureGuide } from "@/components/layout/FeatureGuide";
 import {
 	Briefcase,
 	Code2,
@@ -100,7 +101,12 @@ export function DashboardPage() {
 		<div className="p-6 space-y-8">
 			{/* Welcome */}
 			<div>
-				<h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+				<div className="flex items-center gap-2">
+					<h1 className="text-2xl font-bold text-slate-900">
+						Dashboard
+					</h1>
+					<FeatureGuide variant="dashboard" />
+				</div>
 				<p className="text-sm text-slate-500 mt-1">
 					Your job hunt overview at a glance.
 				</p>
