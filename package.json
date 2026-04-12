@@ -14,5 +14,8 @@
 		"build:web": "npm run build --workspace=apps/web",
 		"type-check": "tsc --noEmit --project apps/web/tsconfig.json",
 		"type-check:mobile": "npm run type-check --workspace=apps/mobile"
+	},
+	"dependencies": {
+		"@vercel/analytics": "^2.0.1"
 	}
 }

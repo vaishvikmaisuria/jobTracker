@@ -14,7 +14,7 @@
 		"@job-tracker/storage": "*",
 		"@job-tracker/types": "*",
 		"@react-native-async-storage/async-storage": "^1.23.1",
-		"expo": "~51.0.39",
+		"expo": "^55.0.14",
 		"expo-status-bar": "~1.12.1",
 		"react": "18.2.0",
 		"react-native": "0.74.5",
