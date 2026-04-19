@@ -207,7 +207,7 @@ export default function SankeyChartPage() {
 			</h1>
 			<div className="mb-6 text-slate-600">
 				This chart visualizes your job application journey for{" "}
-				{new Date().getFullYear()}.
+				{new Date().getFullYear()}. FEATURE UNDERDEVELOPMENT!!
 			</div>
 			{loading && <div>Loading...</div>}
 			{!loading && jobs.length === 0 && (

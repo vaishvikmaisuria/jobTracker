@@ -27,6 +27,7 @@ import {
 	CheckCircle2,
 } from "lucide-react";
 import { formatDate } from "@job-tracker/core";
+import { PrivacyPopup } from "../ui/PrivacyPopup";
 
 export function DashboardPage() {
 	const { jobs, init: initJobs } = useJobStore();
@@ -107,6 +108,7 @@ export function DashboardPage() {
 					</h1>
 					<FeatureGuide variant="dashboard" />
 				</div>
+				<PrivacyPopup />
 				<p className="text-sm text-slate-500 mt-1">
 					Your job hunt overview at a glance.
 				</p>

@@ -46,7 +46,7 @@ export function PrivacyPopup() {
 					<br />
 					Unlike... certain websites.
 					<br />
-					<span className="italic">wink wink</span>
+					<span className="italic">COUGH COUGH... CHATGPT</span>
 				</div>
 				<Button
 					size="md"
